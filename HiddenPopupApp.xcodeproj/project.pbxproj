@@ -254,6 +254,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "HiddenPopupApp uses the microphone for audio input.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "BackgroundMusic uses this for audio routing.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -300,6 +302,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "HiddenPopupApp uses the microphone for audio input.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "BackgroundMusic uses this for audio routing.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
