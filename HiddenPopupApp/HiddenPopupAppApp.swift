@@ -4,6 +4,7 @@ import Speech
 import AVFoundation
 import CoreAudio
 import Combine
+import Speech
 
 // ─────────────────────────────────────────
 // MARK: - App Entry Point
@@ -100,265 +101,158 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-// ─────────────────────────────────────────
-// MARK: - Speech Recognizer Manager
-// ─────────────────────────────────────────
 class SpeechManager: ObservableObject {
 
-    private let speechRecognizer   = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
-    private var recognitionRequest : SFSpeechAudioBufferRecognitionRequest?
-    private var recognitionTask    : SFSpeechRecognitionTask?
-    private let audioEngine        = AVAudioEngine()
+    @Published var transcribedText: String = "Tap 🎙 to start listening..."
+    @Published var isListening: Bool = false
+    @Published var inputSource: String = "Unknown"
 
-    @Published var transcribedText : String = "Tap 🎙 to start listening..."
-    @Published var isListening     : Bool   = false
-    @Published var inputSource     : String = "Unknown"
+    private let audioEngine = AVAudioEngine()
+    private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+    private var recognitionTask: SFSpeechRecognitionTask?
+    private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
 
-    // ── Find BlackHole device ID via CoreAudio ──
     private func findBlackHoleDeviceID() -> AudioDeviceID? {
         var propAddr = AudioObjectPropertyAddress(
             mSelector: kAudioHardwarePropertyDevices,
-            mScope:    kAudioObjectPropertyScopeGlobal,
-            mElement:  kAudioObjectPropertyElementMain
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
         )
-
         var dataSize: UInt32 = 0
-        AudioObjectGetPropertyDataSize(
-            AudioObjectID(kAudioObjectSystemObject),
-            &propAddr, 0, nil, &dataSize
-        )
+        AudioObjectGetPropertyDataSize(AudioObjectID(kAudioObjectSystemObject), &propAddr, 0, nil, &dataSize)
 
-        let count   = Int(dataSize) / MemoryLayout<AudioDeviceID>.size
+        let count = Int(dataSize) / MemoryLayout<AudioDeviceID>.size
         var devices = [AudioDeviceID](repeating: 0, count: count)
-        AudioObjectGetPropertyData(
-            AudioObjectID(kAudioObjectSystemObject),
-            &propAddr, 0, nil, &dataSize, &devices
-        )
+        AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &propAddr, 0, nil, &dataSize, &devices)
 
         for deviceID in devices {
             var nameAddr = AudioObjectPropertyAddress(
                 mSelector: kAudioDevicePropertyDeviceNameCFString,
-                mScope:    kAudioObjectPropertyScopeGlobal,
-                mElement:  kAudioObjectPropertyElementMain
+                mScope: kAudioObjectPropertyScopeGlobal,
+                mElement: kAudioObjectPropertyElementMain
             )
-            
             var nameRef: CFString? = nil
             var nameSize = UInt32(MemoryLayout<CFString?>.size)
-
             let status = withUnsafeMutablePointer(to: &nameRef) { ptr in
-                AudioObjectGetPropertyData(
-                    deviceID,
-                    &nameAddr,
-                    0,
-                    nil,
-                    &nameSize,
-                    ptr
-                )
+                AudioObjectGetPropertyData(deviceID, &nameAddr, 0, nil, &nameSize, ptr)
             }
-
-            if status == noErr, let cfName = nameRef {
-                let name = cfName as String
-                if name.lowercased().contains("blackhole") {
-                    print("✅ Found BlackHole device: \(name) (ID: \(deviceID))")
-                    return deviceID
-                }
+            if status == noErr, let name = nameRef as String?, name.lowercased().contains("blackhole") {
+                print("✅ BlackHole device ID: \(deviceID)")
+                return deviceID
             }
         }
-        print("❌ BlackHole device not found.")
         return nil
     }
 
-    // ── Set BlackHole as AVAudioEngine input ──
-    // ── AFTER (correct fix) ──
-//    private func setInputDevice(_ deviceID: AudioDeviceID) {
-//        var propAddr = AudioObjectPropertyAddress(
-//            mSelector: kAudioHardwarePropertyDefaultInputDevice,
-//            mScope:    kAudioObjectPropertyScopeGlobal,
-//            mElement:  kAudioObjectPropertyElementMain
-//        )
-//        var mutableID = deviceID
-//        let err = AudioObjectSetPropertyData(
-//            AudioObjectID(kAudioObjectSystemObject),
-//            &propAddr,
-//            0,
-//            nil,
-//            UInt32(MemoryLayout<AudioDeviceID>.size),
-//            &mutableID
-//        )
-//        if err != noErr {
-//            print("⚠️ Failed to set BlackHole as default input: \(err)")
-//        } else {
-//            print("✅ BlackHole set as system default input")
-//        }
-//    }
+    func requestPermissionsAndStart() {
+        SFSpeechRecognizer.requestAuthorization { [weak self] status in
+            guard status == .authorized else {
+                DispatchQueue.main.async { self?.transcribedText = "❌ Speech recognition denied." }
+                return
+            }
+            AVCaptureDevice.requestAccess(for: .audio) { granted in
+                DispatchQueue.main.async {
+                    if granted { self?.startListening() }
+                    else { self?.transcribedText = "❌ Microphone access denied." }
+                }
+            }
+        }
+    }
 
-    private func setInputDevice(_ deviceID: AudioDeviceID) {
+    func startListening() {
+        stopListening()
+
+        guard let blackHoleID = findBlackHoleDeviceID() else {
+            DispatchQueue.main.async {
+                self.transcribedText = "⚠️ BlackHole not found."
+                self.inputSource = "Not found"
+            }
+            return
+        }
+
+        // ✅ Set BlackHole on the HAL audio unit BEFORE reset
         let inputNode = audioEngine.inputNode
-        let audioUnit = inputNode.audioUnit!   // The underlying HAL audio unit
+        let audioUnit = inputNode.audioUnit!
 
-        var mutableID = deviceID
+        var deviceID = blackHoleID
         let err = AudioUnitSetProperty(
             audioUnit,
             kAudioOutputUnitProperty_CurrentDevice,
-            kAudioUnitScope_Global,
+            kAudioUnitScope_Global,   // ← was Input before, Global is correct
             0,
-            &mutableID,
+            &deviceID,
             UInt32(MemoryLayout<AudioDeviceID>.size)
         )
+        print(err == noErr ? "✅ Device set on audio unit" : "⚠️ AudioUnit set failed: \(err)")
 
-        if err != noErr {
-            print("⚠️ Failed to set BlackHole on audio unit: \(err)")
-        } else {
-            print("✅ BlackHole set as AVAudioEngine input (process-local)")
-        }
-    }
-    // ── Request permissions then start ──
-    func requestPermissionsAndStart() {
-        SFSpeechRecognizer.requestAuthorization { [weak self] status in
-            DispatchQueue.main.async {
-                switch status {
-                case .authorized:
-                    AVCaptureDevice.requestAccess(for: .audio) { granted in
-                        DispatchQueue.main.async {
-                            if granted { self?.startListening() }
-                            else       { self?.transcribedText = "❌ Microphone access denied." }
-                        }
-                    }
-                case .denied, .restricted:
-                    self?.transcribedText = "❌ Speech recognition denied.\nGo to System Settings → Privacy → Speech Recognition"
-                default:
-                    self?.transcribedText = "❌ Speech recognition not available."
-                }
-            }
-        }
-    }
+        audioEngine.reset()
 
-    // ── Start live transcription from BlackHole ──
-    func startListening() {
-//        recognitionTask?.cancel()
-//        recognitionTask = nil
-//
-//        if audioEngine.isRunning {
-//            audioEngine.stop()
-//        }
-//        audioEngine.inputNode.removeTap(onBus: 0)
-//        audioEngine.reset()
-//
-//        guard let blackHoleID = findBlackHoleDeviceID() else {
-//            DispatchQueue.main.async {
-//                self.inputSource     = "Microphone (BlackHole not found)"
-//                self.transcribedText = "⚠️ BlackHole not found."
-//            }
-//            return
-//        }
-//
-//        setInputDevice(blackHoleID)
-//        Thread.sleep(forTimeInterval: 0.3)
-//
-//        recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
-//        guard let recognitionRequest = recognitionRequest else { return }
-//        recognitionRequest.shouldReportPartialResults = true
-//
-//        let inputNode = audioEngine.inputNode
-//        
-//        // 👇 KEY FIX: Use the NATIVE hardware format — don't let engine negotiate
-//        let hardwareFormat = inputNode.inputFormat(forBus: 0)
-//        print("🎛 Hardware format: \(hardwareFormat)")
-        recognitionTask?.cancel()
-           recognitionTask = nil
+        let hardwareFormat = inputNode.inputFormat(forBus: 0)
+        print("🎛 Format after device set: \(hardwareFormat)")
 
-           if audioEngine.isRunning { audioEngine.stop() }
-           audioEngine.inputNode.removeTap(onBus: 0)
-           audioEngine.reset()
-
-           guard let blackHoleID = findBlackHoleDeviceID() else {
-               DispatchQueue.main.async {
-                   self.inputSource     = "Microphone (BlackHole not found)"
-                   self.transcribedText = "⚠️ BlackHole not found."
-               }
-               return
-           }
-
-           // ✅ Set device on the audio unit BEFORE installing tap
-           setInputDevice(blackHoleID)
-           
-           // NO Thread.sleep needed — device switch is synchronous via AudioUnit property
-
-           recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
-           guard let recognitionRequest = recognitionRequest else { return }
-           recognitionRequest.shouldReportPartialResults = true
-
-           let inputNode     = audioEngine.inputNode
-           let hardwareFormat = inputNode.inputFormat(forBus: 0)
-           print("🎛 Hardware format after device switch: \(hardwareFormat)")
-        
-        // 👇 SFSpeechRecognizer needs mono 16kHz — convert explicitly
-        let recognitionFormat = AVAudioFormat(
-            commonFormat: .pcmFormatFloat32,
-            sampleRate:   16000,
-            channels:     1,
-            interleaved:  false
-        )!
-
-        guard let converter = AVAudioConverter(from: hardwareFormat, to: recognitionFormat) else {
-            print("❌ Could not create audio converter")
+        // ✅ Validate format — if sampleRate is 0, device didn't switch
+        guard hardwareFormat.sampleRate > 0 else {
+            DispatchQueue.main.async { self.transcribedText = "❌ Invalid audio format from BlackHole." }
             return
         }
 
-        inputNode.installTap(onBus: 0, bufferSize: 4096, format: hardwareFormat) { buffer, time in
-            let frameCount = AVAudioFrameCount(
-                recognitionFormat.sampleRate / hardwareFormat.sampleRate * Double(buffer.frameLength)
-            )
-            guard let convertedBuffer = AVAudioPCMBuffer(
-                pcmFormat: recognitionFormat,
-                frameCapacity: frameCount
-            ) else { return }
+        recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
+        recognitionRequest?.shouldReportPartialResults = true
+
+        recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest!) { [weak self] result, error in
+            DispatchQueue.main.async {
+                if let result = result {
+                    self?.transcribedText = result.bestTranscription.formattedString
+                }
+                if error != nil || result?.isFinal == true {
+                    self?.stopListening()
+                }
+            }
+        }
+
+        let targetFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 16000, channels: 1, interleaved: false)!
+        guard let converter = AVAudioConverter(from: hardwareFormat, to: targetFormat) else {
+            DispatchQueue.main.async { self.transcribedText = "❌ Could not create converter." }
+            return
+        }
+
+        inputNode.installTap(onBus: 0, bufferSize: 4096, format: hardwareFormat) { [weak self] buffer, _ in
+            guard let self = self, let request = self.recognitionRequest else { return }
+
+            print("🔊 Got tap buffer: \(buffer.frameLength) frames")
+
+            let frameCount = AVAudioFrameCount(targetFormat.sampleRate / hardwareFormat.sampleRate * Double(buffer.frameLength))
+            guard let converted = AVAudioPCMBuffer(pcmFormat: targetFormat, frameCapacity: frameCount) else { return }
 
             var error: NSError?
-            converter.convert(to: convertedBuffer, error: &error) { _, outStatus in
+            converter.convert(to: converted, error: &error) { _, outStatus in
                 outStatus.pointee = .haveData
                 return buffer
             }
-
-            if error == nil {
-                recognitionRequest.append(convertedBuffer)
-            }
+            if error == nil { request.append(converted) }
         }
 
-//        audioEngine.prepare()
         do {
             try audioEngine.start()
             DispatchQueue.main.async {
-                self.isListening  = true
-                self.inputSource  = "BlackHole 2ch"
+                self.isListening = true
+                self.inputSource = "BlackHole 2ch"
                 self.transcribedText = "🎙 Listening via BlackHole..."
             }
         } catch {
-            DispatchQueue.main.async {
-                self.transcribedText = "❌ Audio engine failed: \(error.localizedDescription)"
-            }
-            return
-        }
-
-        recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest) { [weak self] result, error in
-            if let result = result {
-                DispatchQueue.main.async {
-                    self?.transcribedText = result.bestTranscription.formattedString
-                }
-            }
-            if error != nil || result?.isFinal == true {
-                self?.stopListening()
-            }
+            DispatchQueue.main.async { self.transcribedText = "❌ Engine failed: \(error.localizedDescription)" }
         }
     }
 
-    // ── Stop listening ──
     func stopListening() {
-        audioEngine.stop()
-        audioEngine.inputNode.removeTap(onBus: 0)
+        if audioEngine.isRunning {
+            audioEngine.stop()
+            audioEngine.inputNode.removeTap(onBus: 0)
+        }
         recognitionRequest?.endAudio()
         recognitionRequest = nil
-        recognitionTask    = nil
+        recognitionTask?.cancel()
+        recognitionTask = nil
         DispatchQueue.main.async { self.isListening = false }
     }
 
@@ -366,7 +260,6 @@ class SpeechManager: ObservableObject {
         isListening ? stopListening() : requestPermissionsAndStart()
     }
 }
-
 // ─────────────────────────────────────────
 // MARK: - Popup UI
 // ─────────────────────────────────────────
