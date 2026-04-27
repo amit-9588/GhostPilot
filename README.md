@@ -1,6 +1,6 @@
-# HiddenPopupApp
+# GhostPilot
 
-HiddenPopupApp is a stealthy, floating macOS "copilot" designed to act as an unobtrusive AI command center. It features a transparent, glass-like UI inspired by professional AI assistants and operates entirely invisibly to screen recording software (e.g., Zoom, OBS, Meet).
+GhostPilot is a stealthy, floating macOS "copilot" designed to act as an unobtrusive AI command center. It features a transparent, glass-like UI inspired by professional AI assistants and operates entirely invisibly to screen recording software (e.g., Zoom, OBS, Meet).
 
 ---
 
@@ -42,8 +42,8 @@ To hear audio yourself while the app also listens to it, you must create a "Mult
 4. Go to your Mac's **System Settings > Sound** and set your output to the new **Multi-Output Device**.
 
 ### Step 3: Run the Project
-1. Open the `HiddenPopupApp` folder and double-click `HiddenPopupApp.xcodeproj` to open it in Xcode.
-2. In Xcode, locate the file `HiddenPopupAppApp.swift` in the left sidebar and click on it.
+1. Open the `GhostPilot` folder and double-click `GhostPilot.xcodeproj` to open it in Xcode.
+2. In Xcode, locate the file `GhostPilotApp.swift` in the left sidebar and click on it.
 3. Find the line that looks like this:
    ```swift
    let apiKey = "YOUR_API_KEY_HERE"
@@ -57,7 +57,7 @@ The first time you run the app and try to use its features, macOS will prompt yo
 - **Screen Recording**: Required for the "Analyze Screen" feature to take invisible screenshots.
 - **Microphone**: Required to capture your voice and the system audio via BlackHole.
 
-*(If you ever accidentally deny a permission, go to System Settings > Privacy & Security to manually enable them for HiddenPopupApp).*
+*(If you ever accidentally deny a permission, go to System Settings > Privacy & Security to manually enable them for GhostPilot).*
 
 ---
 

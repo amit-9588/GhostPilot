@@ -7,13 +7,13 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		047C426E2F8EF2B700C163F1 /* HiddenPopupApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HiddenPopupApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		047C426E2F8EF2B700C163F1 /* GhostPilot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GhostPilot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		047C42702F8EF2B700C163F1 /* HiddenPopupApp */ = {
+		047C42702F8EF2B700C163F1 /* GhostPilot */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = HiddenPopupApp;
+			path = GhostPilot;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -32,7 +32,7 @@
 		047C42652F8EF2B600C163F1 = {
 			isa = PBXGroup;
 			children = (
-				047C42702F8EF2B700C163F1 /* HiddenPopupApp */,
+				047C42702F8EF2B700C163F1 /* GhostPilot */,
 				047C426F2F8EF2B700C163F1 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -40,7 +40,7 @@
 		047C426F2F8EF2B700C163F1 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				047C426E2F8EF2B700C163F1 /* HiddenPopupApp.app */,
+				047C426E2F8EF2B700C163F1 /* GhostPilot.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,9 +48,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		047C426D2F8EF2B700C163F1 /* HiddenPopupApp */ = {
+		047C426D2F8EF2B700C163F1 /* GhostPilot */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 047C42792F8EF2B800C163F1 /* Build configuration list for PBXNativeTarget "HiddenPopupApp" */;
+			buildConfigurationList = 047C42792F8EF2B800C163F1 /* Build configuration list for PBXNativeTarget "GhostPilot" */;
 			buildPhases = (
 				047C426A2F8EF2B700C163F1 /* Sources */,
 				047C426B2F8EF2B700C163F1 /* Frameworks */,
@@ -61,13 +61,13 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				047C42702F8EF2B700C163F1 /* HiddenPopupApp */,
+				047C42702F8EF2B700C163F1 /* GhostPilot */,
 			);
-			name = HiddenPopupApp;
+			name = GhostPilot;
 			packageProductDependencies = (
 			);
-			productName = HiddenPopupApp;
-			productReference = 047C426E2F8EF2B700C163F1 /* HiddenPopupApp.app */;
+			productName = GhostPilot;
+			productReference = 047C426E2F8EF2B700C163F1 /* GhostPilot.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -86,7 +86,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 047C42692F8EF2B600C163F1 /* Build configuration list for PBXProject "HiddenPopupApp" */;
+			buildConfigurationList = 047C42692F8EF2B600C163F1 /* Build configuration list for PBXProject "GhostPilot" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -100,7 +100,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				047C426D2F8EF2B700C163F1 /* HiddenPopupApp */,
+				047C426D2F8EF2B700C163F1 /* GhostPilot */,
 			);
 		};
 /* End PBXProject section */
@@ -254,7 +254,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "HiddenPopupApp uses the microphone for audio input.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "GhostPilot uses the microphone for audio input.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "BackgroundMusic uses this for audio routing.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -271,7 +271,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = self.HiddenPopupApp;
+				PRODUCT_BUNDLE_IDENTIFIER = self.GhostPilot;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -302,7 +302,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "HiddenPopupApp uses the microphone for audio input.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "GhostPilot uses the microphone for audio input.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "BackgroundMusic uses this for audio routing.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -319,7 +319,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = self.HiddenPopupApp;
+				PRODUCT_BUNDLE_IDENTIFIER = self.GhostPilot;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -338,7 +338,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		047C42692F8EF2B600C163F1 /* Build configuration list for PBXProject "HiddenPopupApp" */ = {
+		047C42692F8EF2B600C163F1 /* Build configuration list for PBXProject "GhostPilot" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				047C42772F8EF2B800C163F1 /* Debug */,
@@ -347,7 +347,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		047C42792F8EF2B800C163F1 /* Build configuration list for PBXNativeTarget "HiddenPopupApp" */ = {
+		047C42792F8EF2B800C163F1 /* Build configuration list for PBXNativeTarget "GhostPilot" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				047C427A2F8EF2B800C163F1 /* Debug */,
