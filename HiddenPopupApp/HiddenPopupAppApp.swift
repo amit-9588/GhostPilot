@@ -94,7 +94,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func showPopup() {
         let sz = AppDelegate.compactSize
-        let hostingView = NSHostingView(rootView: PopupView(
+        let hostingView = ClickThroughHostingView(rootView: PopupView(
             onClose: { [weak self] in self?.popupWindow?.orderOut(nil) },
             onToggleFullScreen: { [weak self] in self?.toggleWindowSize() }
         ))
@@ -106,12 +106,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             backing:     .buffered,
             defer:       false
         )
-        window.sharingType     = .none
-        window.contentView     = hostingView
-        window.isOpaque        = false
-        window.backgroundColor = .clear
-        window.level           = .floating
-        window.hasShadow       = true
+        window.sharingType               = .none
+        window.contentView               = hostingView
+        window.isOpaque                  = false
+        window.backgroundColor           = .clear
+        window.level                     = .floating
+        window.hasShadow                 = true
+        // Fix 1: allow dragging from any non-button background area
+        window.isMovableByWindowBackground = true
+        // Fix 1: prevent collapsing to nothing when resizing
+        window.minSize = NSSize(width: 380, height: 260)
 
         // Center on screen
         if let screen = NSScreen.main {
@@ -153,6 +157,35 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 extension NSNotification.Name {
     static let triggerScreenCapture = NSNotification.Name("TriggerScreenCapture")
+}
+
+// ─────────────────────────────────────────
+// MARK: - Click-through hosting view
+// The toolbar (top ~90 pts in SwiftUI = HIGH y-values in AppKit) always
+// receives events so all buttons work. The transparent content area below
+// returns nil from hitTest so clicks fall through to underlying windows.
+// ─────────────────────────────────────────
+final class ClickThroughHostingView: NSHostingView<AnyView> {
+    convenience init<V: View>(rootView: V) {
+        self.init(rootView: AnyView(rootView))
+    }
+    override var isOpaque: Bool { false }
+
+    // Height of toolbar + marquee strip in SwiftUI points.
+    // AppKit y=0 is at BOTTOM, so this zone is at the TOP of the window
+    // = y values >= (bounds.height - interactiveHeight).
+    private let interactiveHeight: CGFloat = 92
+
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        // point is in the view’s own coordinate space (y=0 at bottom).
+        let inToolbar = point.y >= (bounds.height - interactiveHeight)
+        if inToolbar {
+            // Toolbar zone — use normal SwiftUI hit testing so every button works.
+            return super.hitTest(point)
+        }
+        // Content / transparent zone — pass clicks through to underlying windows.
+        return nil
+    }
 }
 
 // ─────────────────────────────────────────
@@ -700,9 +733,10 @@ struct PopupView: View {
 
     var body: some View {
         ZStack {
-            // ── True see-through: NSWindow is isOpaque=false so any Color with opacity
-            // composites directly against the real pixels behind the window. ──
+            // ── True see-through: .allowsHitTesting(false) means this Color
+            // doesn't claim clicks — they fall through via ClickThroughHostingView. ──
             Color.black.opacity(0.25)
+                .allowsHitTesting(false)
 
             VStack(spacing: 0) {
 
@@ -965,6 +999,17 @@ struct PopupView: View {
                         .padding(.trailing, 14)
                         .padding(.top, 12)
                         Spacer()
+                    }
+                // ── Resize grip — bottom-right corner ──
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                .font(.system(size: 9, weight: .light))
+                                .foregroundColor(.white.opacity(0.30))
+                                .padding(8)
+                        }
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
