@@ -745,12 +745,17 @@ struct PopupView: View {
                 // ══════════════════════════════════
                 HStack(spacing: 8) {
 
-                    // App badge
-                    ZStack {
-                        Circle()
-                            .fill(Color(red: 0.12, green: 0.58, blue: 0.33))
-                            .frame(width: 30, height: 30)
-                        Text("🦜").font(.system(size: 15))
+                    // App badge & Title
+                    HStack(spacing: 6) {
+                        ZStack {
+                            Circle()
+                                .fill(Color(red: 0.12, green: 0.58, blue: 0.33))
+                                .frame(width: 30, height: 30)
+                            Text("🦜").font(.system(size: 15))
+                        }
+                        Text("GhostPilot")
+                            .font(.system(size: 14, weight: .heavy))
+                            .foregroundColor(.white)
                     }
 
                     // Gap 4 Fix: standalone mic icon for quick mute
